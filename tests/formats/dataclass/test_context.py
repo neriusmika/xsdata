@@ -4,7 +4,6 @@ from dataclasses import field
 from dataclasses import fields
 from dataclasses import make_dataclass
 from dataclasses import replace
-from datetime import datetime
 from typing import Generator
 from typing import get_type_hints
 from typing import Iterator
@@ -272,50 +271,6 @@ class XmlContextTests(TestCase):
         )
 
         self.assertEqual([expected], list(actual))
-
-    def test_get_type_hints_with_undefined_types(self):
-        @dataclass
-        class Currency:
-            id: int = field(metadata=dict(type="Attribute", name="ID"))
-            iso_code: str = field(metadata=dict(name="CharCode"))
-            nominal: int = field(metadata=dict(name="Nominal"))
-
-        @dataclass
-        class Currencies:
-            name: str = field(metadata=dict(type="Attribute"))
-            updated: datetime = field(metadata=dict(type="Attribute", format="%M-%D"))
-            values: List[Currency] = field(default_factory=list)
-
-        expected = [
-            XmlVar(attribute=True, name="id", qname="ID", types=[int]),
-            XmlVar(element=True, name="iso_code", qname="CharCode", types=[str]),
-            XmlVar(element=True, name="nominal", qname="Nominal", types=[int]),
-        ]
-        actual = self.ctx.get_type_hints(Currency, None, return_input, return_input)
-        self.assertEqual(expected, list(actual))
-
-        expected = [
-            XmlVar(attribute=True, name="name", qname="name", types=[str]),
-            XmlVar(
-                attribute=True,
-                name="updated",
-                qname="updated",
-                types=[datetime],
-                format="%M-%D",
-            ),
-            XmlVar(
-                element=True,
-                name="values",
-                qname="values",
-                dataclass=True,
-                list_element=True,
-                default=list,
-                types=[Currency],
-            ),
-        ]
-
-        actual = self.ctx.get_type_hints(Currencies, None, return_input, return_input)
-        self.assertEqual(expected, list(actual))
 
     def test_get_type_hints_with_choices(self):
         actual = self.ctx.get_type_hints(Node, "bar", return_input, return_input)
